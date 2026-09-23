@@ -1,0 +1,85 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===== Virtual Environments =====
+venv/
+env/
+ENV/
+.venv/
+.env/
+virtualenv/
+
+# ===== Flask =====
+instance/
+.webassets-cache
+flask_session/
+
+# ===== Environment Variables =====
+.env
+.env.*
+!.env.example
+
+# ===== Database =====
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ===== Migrations (optional — usually you DO commit these) =====
+# migrations/versions/*.py.bak
+
+# ===== Testing / Coverage =====
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== IDE / Editors =====
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS Files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Node (if you add a frontend later) =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
