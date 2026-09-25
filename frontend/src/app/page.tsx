@@ -1,9 +1,20 @@
-import Image from "next/image";
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-     
-    </div>
-  );
+
+export default async function HomePage() {
+  
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  console.log(user)
+
+  if (user) {
+    redirect('/dashboard')
+  }
+
+  redirect('/login')
 }
