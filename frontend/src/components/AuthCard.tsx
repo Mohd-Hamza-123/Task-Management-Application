@@ -27,6 +27,8 @@ export default function AuthCard({ mode }: AuthCardProps) {
         },
       });
 
+      
+
       if (error) {
         setError(error.message);
         setLoading(false);
