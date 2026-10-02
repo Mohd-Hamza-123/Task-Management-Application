@@ -5,7 +5,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
 import { Badge } from "@/components/ui/badge";
 import { deleteTask as removeTask } from '@/lib/api/tasks';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import {
     Search,
     CalendarDays,
     MoreHorizontal,
+    Trash,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +29,10 @@ import { useQuery } from '@tanstack/react-query';
 import { getTasks } from '@/lib/api/tasks';
 import { Spinner } from './ui/spinner';
 import { toast } from './ui/toast';
+import Image from 'next/image';
+import EditTaskDialog from './EditTaskDialog';
+import Link from 'next/link';
+import { Button } from './ui/button';
 
 type TaskStatus = "pending" | "in_progress" | "completed";
 type TaskPriority = "low" | "medium" | "high";
@@ -38,29 +43,13 @@ interface Task {
     description: string;
     status: TaskStatus;
     priority: TaskPriority;
-    dueDate: string;
-    assignedTo: {
-        name: string;
+    due_date: string;
+    assigned_user: {
+        full_name: string;
         email: string;
-        initials: string;
+        avatar_url: string
     };
 }
-
-const dummyTasks: Task[] = [
-    {
-        id: "1",
-        title: "Design landing page",
-        description: "Create the initial landing page design",
-        status: "in_progress",
-        priority: "high",
-        dueDate: "2026-09-28",
-        assignedTo: {
-            name: "Rahul Sharma",
-            email: "rahul@example.com",
-            initials: "RS",
-        },
-    },
-];
 
 
 
@@ -110,14 +99,13 @@ export default function Tasks() {
     });
 
     const tasks: Task[] = data?.data || []
-    console.log(tasks)
 
     const filteredTasks = useMemo(() => {
         return tasks?.filter((task) => {
             const matchesSearch =
                 task.title.toLowerCase().includes(search.toLowerCase()) ||
-                task.description.toLowerCase().includes(search.toLowerCase()) ||
-                task.assignedTo.name.toLowerCase().includes(search.toLowerCase());
+                task.description?.toLowerCase()?.includes(search.toLowerCase()) ||
+                task.assigned_user.full_name.toLowerCase().includes(search.toLowerCase());
 
             const matchesStatus =
                 activeTab === "all" || task.status === activeTab;
@@ -138,6 +126,7 @@ export default function Tasks() {
             .length,
     };
 
+    // console.log(stats)
 
 
 
@@ -245,6 +234,7 @@ function TaskRow({ task }: { task: Task }) {
     const status = statusConfig[task.status];
     const priority = priorityConfig[task.priority];
 
+
     const { refetch } = useQuery({
         queryKey: ["tasks"],
         queryFn: getTasks,
@@ -252,14 +242,15 @@ function TaskRow({ task }: { task: Task }) {
 
     const deleteTask = async (id: string) => {
         try {
-            console.log(id)
+
             const res = await removeTask(id)
             refetch()
-            console.log(res)
+
             toast.add({
                 title: "Task Deleted"
             })
         } catch (error) {
+            console.error(error)
             toast.add({
                 type: 'error',
                 title: "Task not deleted"
@@ -267,7 +258,7 @@ function TaskRow({ task }: { task: Task }) {
         }
     }
 
-    const formattedDate = new Date(task.dueDate).toLocaleDateString(
+    const formattedDate = new Date(task.due_date).toLocaleDateString(
         "en-IN",
         {
             day: "2-digit",
@@ -286,9 +277,9 @@ function TaskRow({ task }: { task: Task }) {
                     />
 
                     <div className="min-w-0">
-                        <h3 className="truncate font-medium">
+                        <Link href={`/tasks/${task.id}`} className="truncate font-medium">
                             {task.title}
-                        </h3>
+                        </Link>
 
                         <p className="mt-1 truncate text-sm text-muted-foreground">
                             {task.description}
@@ -325,48 +316,35 @@ function TaskRow({ task }: { task: Task }) {
             </div>
 
             {/* Assignee */}
-            {/* <div className="flex items-center gap-3 lg:w-44">
-                <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs">
-                        {task.assignedTo.initials}
-                    </AvatarFallback>
-                </Avatar>
+            <div className="flex items-center gap-3 lg:w-44">
+
+                <Image
+                    height={100}
+                    width={100}
+                    className='h-8 w-8 rounded-full'
+                    src={task.assigned_user.avatar_url}
+                    alt={task.assigned_user.full_name}
+                />
 
                 <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                        {task.assignedTo.name}
+                        {task.assigned_user.full_name}
                     </p>
 
                     <p className="truncate text-xs text-muted-foreground">
-                        {task.assignedTo.email}
+                        {task.assigned_user.email}
                     </p>
                 </div>
-            </div> */}
+            </div>
 
             {/* Actions */}
-            <DropdownMenu>
-                <DropdownMenuTrigger>
 
-                    <MoreHorizontal className="h-4 w-4" />
+            <EditTaskDialog task={task} refetch={refetch} />
 
-                </DropdownMenuTrigger>
+            <Button className={''} variant={"destructive"} onClick={() => deleteTask(task.id)}>
+                <Trash />
+            </Button>
 
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                        View task
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem>
-                        Edit task
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator />
-
-                    <DropdownMenuItem className="text-destructive" onClick={() => deleteTask(task.id)}>
-                        Delete task
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+        </div >
     );
 }

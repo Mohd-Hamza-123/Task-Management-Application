@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-    CalendarIcon,
-    Loader2,
-    Plus,
-} from "lucide-react";
+import { CalendarIcon, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -29,37 +25,54 @@ import {
 import { toast } from "./ui/toast";
 import { getUsers } from "@/lib/api/users";
 import { useQuery } from "@tanstack/react-query";
-import { createTask, getTasks } from "@/lib/api/tasks";
+import { updateTask, getTasks } from "@/lib/api/tasks";
 
-interface user {
-    id: number;
+interface User {
+    id: string;
     full_name: string;
-    email: string
+    email: string;
+}
+
+export interface Task {
+    id: string;
+    title: string;
+    description?: string | null;
+    priority: "high" | "medium" | "low";
+    assigned_to?: string | null;
+    due_date?: string | null;
 }
 
 
-export default function CreateTaskDialog() {
+export default function EditTaskDialog({
+    task,
+    refetch
+}: { task: Task, refetch?: any }) {
 
-    const [openTaskDialog, setOpenTaskDialog] = useState(false)
+    const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [priority, setPriority] = useState("medium");
-    const [assignedTo, setAssignedTo] = useState("");
-    const [dueDate, setDueDate] = useState("");
-    const [users, setUsers] = useState<user[]>([])
-    const [loadingUsers, setLoadingUsers] = useState(true)
+    const [title, setTitle] = useState(task.title ?? "");
+    const [description, setDescription] = useState(task.description ?? "");
+    const [priority, setPriority] = useState(task.priority ?? "medium");
+    const [assignedTo, setAssignedTo] = useState(task.assigned_to ?? "");
+    const [dueDate, setDueDate] = useState(task.due_date ?? "");
+    const [users, setUsers] = useState<User[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(true);
 
-    const { refetch } = useQuery({
-        queryKey: ["tasks"],
-        queryFn: getTasks,
-    });
+    // Reset the form whenever a different task is opened, or the dialog reopens
+    useEffect(() => {
+        if (open) {
+            setTitle(task.title ?? "");
+            setDescription(task.description ?? "");
+            setPriority(task.priority ?? "medium");
+            setAssignedTo(task.assigned_to ?? "");
+            setDueDate(task.due_date ?? "");
+        }
+    }, [task, setOpen]);
 
     async function fetchUsers() {
         try {
-            const res = await getUsers()
-            // console.log(res)
-            setUsers(res)
+            const res = await getUsers();
+            setUsers(res);
         } catch (error: unknown) {
             console.error("Failed to fetch users:", error);
         } finally {
@@ -71,67 +84,82 @@ export default function CreateTaskDialog() {
         fetchUsers();
     }, []);
 
-
     const handleSubmit = async (e: React.FormEvent) => {
+
         e.preventDefault();
+
+        if (!title.trim()) {
+            toast.add({ type: "error", title: "Title cannot be empty" });
+            return;
+        }
 
         setLoading(true);
 
-        const taskData = {
-            title,
-            ...(description && { description }),
-            priority: priority as "high" | "medium" | "low",
-            assigned_to: assignedTo || null,
-            due_date: dueDate || null,
-        };
+        // Only send fields that actually changed
+        const updates: any = {};
+        if (title !== task.title) updates.title = title;
+        if (description !== (task.description ?? ""))
+            updates.description = description || null;
+        if (priority !== task.priority) updates.priority = priority;
+        if (assignedTo !== (task.assigned_to ?? ""))
+            updates.assigned_to = assignedTo || null;
+        if (dueDate !== (task.due_date ?? "")) updates.due_date = dueDate || null;
 
-        // console.log("Task data:", taskData);
+        if (Object.keys(updates).length === 0) {
+            setLoading(false);
+            setOpen(false);
+            return;
+        }
 
         try {
-            await createTask(taskData)
-            refetch()
+            await updateTask(task.id, updates);
+            refetch();
             toast.add({
-                title: "Task Created"
-            })
-
+                title: "Task updated",
+            });
+            setOpen(false);
         } catch (error) {
-            const message = error instanceof Error ? error.message : "something went wrong"
+            const message =
+                error instanceof Error ? error.message : "something went wrong";
             toast.add({
-                type: 'error',
-                title: message
-            })
+                type: "error",
+                title: message,
+            });
         }
 
         setLoading(false);
-
-        // Reset form
-        setTitle("");
-        setDescription("");
-        setPriority("medium");
-        setAssignedTo("");
-        setDueDate("");
-
-        setOpen(false);
     };
 
     return (
-        <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
-            <DialogTrigger className={`flex gap-1 items-center bg-foreground text-background rounded-lg px-2 py-1`}>
-                <Plus className="h-4 w-4" />
-                Create Task
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <Pencil size={18} />
+                </Button>
             </DialogTrigger>
 
-            <DialogContent className="sm:max-w-125">
+            <DialogContent
+                className="
+            w-[calc(100%-2rem)]
+            max-w-lg
+            max-h-[90vh]
+            overflow-y-auto
+            rounded-lg
+            p-4
+            sm:p-6
+        "
+            >
                 <DialogHeader>
-                    <DialogTitle>Create a new task</DialogTitle>
+                    <DialogTitle>Edit task</DialogTitle>
 
                     <DialogDescription>
-                        Create a task and assign it to a team member.
+                        Update the task details and save your changes.
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-5 py-4">
+
                         {/* Title */}
                         <div className="space-y-2">
                             <Label htmlFor="title">
@@ -155,9 +183,10 @@ export default function CreateTaskDialog() {
 
                             <Textarea
                                 id="description"
+                                className="min-h-24 resize-none"
                                 placeholder="Describe what needs to be done..."
                                 value={description}
-                                onChange={(e: any) =>
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                                     setDescription(e.target.value)
                                 }
                                 rows={4}
@@ -165,7 +194,8 @@ export default function CreateTaskDialog() {
                         </div>
 
                         {/* Priority + Assignee */}
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
                             {/* Priority */}
                             <div className="space-y-2">
                                 <Label>Priority</Label>
@@ -174,7 +204,7 @@ export default function CreateTaskDialog() {
                                     value={priority}
                                     onValueChange={setPriority}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select priority" />
                                     </SelectTrigger>
 
@@ -201,8 +231,9 @@ export default function CreateTaskDialog() {
                                 <Select
                                     value={assignedTo}
                                     onValueChange={setAssignedTo}
+                                    disabled={loadingUsers}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue placeholder="Select user" />
                                     </SelectTrigger>
 
@@ -212,9 +243,12 @@ export default function CreateTaskDialog() {
                                                 key={user.id}
                                                 value={user.id}
                                             >
-                                                <div className="flex flex-col">
-                                                    <span>{user.full_name}</span>
-                                                    <span className="text-xs text-muted-foreground">
+                                                <div className="flex min-w-0 flex-col">
+                                                    <span className="truncate">
+                                                        {user.full_name}
+                                                    </span>
+
+                                                    <span className="truncate text-xs text-muted-foreground">
                                                         {user.email}
                                                     </span>
                                                 </div>
@@ -232,7 +266,17 @@ export default function CreateTaskDialog() {
                             </Label>
 
                             <div className="relative">
-                                <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <CalendarIcon
+                                    className="
+                                absolute
+                                left-3
+                                top-1/2
+                                h-4
+                                w-4
+                                -translate-y-1/2
+                                text-muted-foreground
+                            "
+                                />
 
                                 <Input
                                     id="dueDate"
@@ -241,33 +285,35 @@ export default function CreateTaskDialog() {
                                     onChange={(e) =>
                                         setDueDate(e.target.value)
                                     }
-                                    className="pl-10"
+                                    className="w-full pl-10"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                         <Button
                             type="button"
                             variant="outline"
                             onClick={() => setOpen(false)}
                             disabled={loading}
+                            className="w-full sm:w-auto"
                         >
                             Cancel
                         </Button>
 
-                        <Button type="submit" disabled={loading}>
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full sm:w-auto"
+                        >
                             {loading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Creating...
+                                    Saving...
                                 </>
                             ) : (
-                                <>
-                                    <Plus className="h-4 w-4" />
-                                    Create Task
-                                </>
+                                "Save changes"
                             )}
                         </Button>
                     </DialogFooter>

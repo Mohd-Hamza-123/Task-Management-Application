@@ -2,19 +2,16 @@
 
 import { useState } from "react";
 import {
-  Bell,
-  CheckCircle2,
-  Clock3,
-  LayoutDashboard,
-  ListTodo,
-  Menu,
-  Settings,
-  Users,
   X,
+  Bell,
+  Menu,
+  Users,
+  Clock3,
+  Settings,
+  ListTodo,
+  CheckCircle2,
+  LayoutDashboard,
 } from "lucide-react";
-
-
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,12 +20,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import Tasks from "@/components/Tasks";
+import { getTasks } from "@/lib/api/tasks";
+import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
-
-
 import CreateTaskDialog from "@/components/CreateTaskDialog";
 import SidebarUserMenu from "@/components/SidebarUserMenu";
-import Tasks from "@/components/Tasks";
 
 type TaskStatus = "pending" | "in_progress" | "completed";
 type TaskPriority = "low" | "medium" | "high";
@@ -47,83 +44,18 @@ interface Task {
   };
 }
 
-const dummyTasks: Task[] = [
-  {
-    id: "1",
-    title: "Design landing page",
-    description: "Create the initial landing page design",
-    status: "in_progress",
-    priority: "high",
-    dueDate: "2026-09-28",
-    assignedTo: {
-      name: "Rahul Sharma",
-      email: "rahul@example.com",
-      initials: "RS",
-    },
-  },
-  {
-    id: "2",
-    title: "Setup authentication",
-    description: "Configure Google OAuth authentication",
-    status: "completed",
-    priority: "high",
-    dueDate: "2026-09-25",
-    assignedTo: {
-      name: "Priya Singh",
-      email: "priya@example.com",
-      initials: "PS",
-    },
-  },
-  {
-    id: "3",
-    title: "Create task API",
-    description: "Build Flask APIs for task management",
-    status: "pending",
-    priority: "medium",
-    dueDate: "2026-09-30",
-    assignedTo: {
-      name: "Amit Kumar",
-      email: "amit@example.com",
-      initials: "AK",
-    },
-  },
-  {
-    id: "4",
-    title: "Setup email notifications",
-    description: "Send Gmail notifications for task events",
-    status: "pending",
-    priority: "low",
-    dueDate: "2026-10-02",
-    assignedTo: {
-      name: "Neha Verma",
-      email: "neha@example.com",
-      initials: "NV",
-    },
-  },
-  {
-    id: "5",
-    title: "Deploy backend API",
-    description: "Deploy Flask application to production",
-    status: "in_progress",
-    priority: "medium",
-    dueDate: "2026-10-04",
-    assignedTo: {
-      name: "Arjun Mehta",
-      email: "arjun@example.com",
-      initials: "AM",
-    },
-  },
-];
-
-
-
 export default function DashboardPage() {
-  const [tasks] = useState<Task[]>(dummyTasks);
-  const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [openTaskDialog, setOpenTaskDialog] = useState(false)
+
+  const { data, isPending, isError, refetch } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: getTasks,
+  });
+
+  const tasks: Task[] = data?.data || []
 
   const stats = {
     total: tasks.length,
@@ -289,7 +221,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Tasks */}
-          <Tasks/>
+          <Tasks />
         </main>
       </div>
     </div>

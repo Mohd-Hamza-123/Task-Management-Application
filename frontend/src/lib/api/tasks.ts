@@ -19,8 +19,19 @@ export async function getTasks() {
     return apiClient("/api/tasks")
 }
 
-export async function deleteTask(id : string){
-    return apiClient(`/api/tasks/${id}`,{
-        method : "DELETE"
+export async function getTask(id: string) {
+    return apiClient(`/api/task/${id}`)
+}
+
+export async function deleteTask(id: string) {
+    return apiClient(`/api/tasks/${id}`, {
+        method: "DELETE"
+    })
+}
+
+export async function updateTask(id: string, body: task) {
+    return apiClient(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(body)
     })
 }
