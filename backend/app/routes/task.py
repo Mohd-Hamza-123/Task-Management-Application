@@ -1,6 +1,8 @@
 from app.supabase import supabase
 from flask import Blueprint, request
 from app.auth.decorators import require_auth
+from flask_mail import Message
+from app.services.email_service import send_task_email
 
 task_bp = Blueprint("task", __name__)
 
@@ -73,6 +75,23 @@ def delete_task(id):
 def create_task():
     data = request.get_json()
     created_by = request.current_user.id
+    sender_mail = request.current_user.email
+
+    assignee = (
+        supabase
+        .table("profiles")
+        .select("id, full_name, email")
+        .eq("id", data.get("assigned_to"))
+        .single()
+        .execute()
+    )
+
+    if not assignee.data:
+        return {"error": "task assinged to invalid user"}, 404
+
+    assignee_data = assignee.data
+
+    print("assignee : ", assignee_data)
 
     task_response = supabase.table("tasks").insert({
         "assigned_to": data.get("assigned_to"),
@@ -82,12 +101,17 @@ def create_task():
         "created_by": created_by
     }).execute()
 
-    # print(task_response.data)
+    send_task_email(
+        recipient=[assignee_data['email']], 
+        task_title="Task Assigned", 
+        body=f"You have been assigned the task: {data.get("title")}"
+    )
 
     return {"data": task_response.data}, 201
 
 
-ALLOWED_UPDATED_FIELDS = {"title", "description", "due_date", "assigned_to","priority","completed_at"}
+ALLOWED_UPDATED_FIELDS = {"title", "description",
+                          "due_date", "assigned_to", "priority", "completed_at"}
 
 
 @task_bp.route("/api/tasks/<id>", methods=["PATCH"])
