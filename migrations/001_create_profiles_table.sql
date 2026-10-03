@@ -1,9 +1,13 @@
+
+create type role_enum as enum ('user', 'admin');
+
 create table public.profiles (
   id uuid references auth.users(id) on delete cascade primary key,
   email text not null,
   full_name text,
   avatar_url text,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  role role_enum not null default 'user',
 );
 
 -- Auto-create a profile row whenever a new user signs up via Google OAuth
