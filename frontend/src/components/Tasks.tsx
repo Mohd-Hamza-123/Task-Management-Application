@@ -5,9 +5,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-
+import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 import { Badge } from "@/components/ui/badge";
-import { deleteTask as removeTask } from '@/lib/api/tasks';
+import { getTaskStats, deleteTask as removeTask } from '@/lib/api/tasks';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     ListTodo,
@@ -18,14 +18,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getTasks } from '@/lib/api/tasks';
 import { Spinner } from './ui/spinner';
 import { toast } from './ui/toast';
@@ -93,12 +86,33 @@ export default function Tasks() {
     const [activeTab, setActiveTab] = useState("all");
     const [search, setSearch] = useState("");
 
-    const { data, isPending, isError, refetch } = useQuery({
+    const {
+        data,
+        isPending,
+        isError,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = useInfiniteQuery({
         queryKey: ["tasks"],
-        queryFn: getTasks,
+
+        queryFn: ({ pageParam }) => getTasks(pageParam),
+
+        initialPageParam: 1,
+
+        getNextPageParam: (lastPage) => {
+            if (!lastPage.hasNextPage) {
+                return undefined;
+            }
+
+            return lastPage.nextPage;
+        },
     });
 
-    const tasks: Task[] = data?.data || []
+    const tasks: Task[] =
+        data?.pages.flatMap((page) => page.data) ?? [];
+
+    console.log(tasks)
 
     const filteredTasks = useMemo(() => {
         return tasks?.filter((task) => {
@@ -114,9 +128,6 @@ export default function Tasks() {
         });
     }, [tasks, search, activeTab]);
 
-
-
-
     const stats = {
         total: tasks.length,
         pending: tasks.filter((task) => task.status === "pending").length,
@@ -126,9 +137,14 @@ export default function Tasks() {
             .length,
     };
 
-    // console.log(stats)
+    const handleIntersect = () => {
+        // console.log("Visible")
+        if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }
 
-
+    const targetRef = useIntersectionObserver({ callback: handleIntersect })
 
     return (
         <Card className="mt-8">
@@ -216,6 +232,9 @@ export default function Tasks() {
                             {filteredTasks.map((task) => (
                                 <TaskRow key={task.id} task={task} />
                             ))}
+                            <div className='flex justify-center' ref={targetRef}>
+                                {isFetchingNextPage && <Spinner className='mt-2' />}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -231,21 +250,32 @@ export default function Tasks() {
 
 function TaskRow({ task }: { task: Task }) {
 
+    const queryClient = useQueryClient()
+
+    const { isPending, data, refetch } = useQuery({
+        queryFn: getTaskStats,
+        queryKey: ["task-stats"]
+    })
+
     const status = statusConfig[task.status];
     const priority = priorityConfig[task.priority];
-
-
-    const { refetch } = useQuery({
-        queryKey: ["tasks"],
-        queryFn: getTasks,
-    });
 
     const deleteTask = async (id: string) => {
         try {
 
             const res = await removeTask(id)
-            refetch()
+            queryClient.setQueryData(["tasks"], (oldData: any) => {
+                if (!oldData) return oldData;
 
+                return {
+                    ...oldData,
+                    pages: oldData.pages.map((page: any) => ({
+                        ...page,
+                        data: page.data.filter((task: any) => task.id !== id),
+                    })),
+                };
+            });
+            refetch()
             toast.add({
                 title: "Task Deleted"
             })
@@ -322,24 +352,24 @@ function TaskRow({ task }: { task: Task }) {
                     height={100}
                     width={100}
                     className='h-8 w-8 rounded-full'
-                    src={task.assigned_user.avatar_url}
-                    alt={task.assigned_user.full_name}
+                    src={task?.assigned_user?.avatar_url}
+                    alt={task?.assigned_user?.full_name}
                 />
 
                 <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                        {task.assigned_user.full_name}
+                        {task?.assigned_user?.full_name}
                     </p>
 
                     <p className="truncate text-xs text-muted-foreground">
-                        {task.assigned_user.email}
+                        {task?.assigned_user?.email}
                     </p>
                 </div>
             </div>
 
             {/* Actions */}
 
-            <EditTaskDialog task={task} refetch={refetch} />
+            <EditTaskDialog task={task} />
 
             <Button className={''} variant={"destructive"} onClick={() => deleteTask(task.id)}>
                 <Trash />

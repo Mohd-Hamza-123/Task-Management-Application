@@ -15,8 +15,17 @@ export async function createTask(body: task) {
     })
 }
 
-export async function getTasks() {
-    return apiClient("/api/tasks")
+export async function getTasks(pageParam: number) {
+    const params = new URLSearchParams({
+        page: String(pageParam),
+        limit: "5",
+    });
+
+    return apiClient(`/api/tasks?${params.toString()}`);
+}
+
+export async function getTaskStats(){
+    return apiClient(`/api/task-stats`)
 }
 
 export async function getTask(id: string) {

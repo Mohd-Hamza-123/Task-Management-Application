@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "./ui/toast";
 import { getUsers } from "@/lib/api/users";
-import { useQuery } from "@tanstack/react-query";
-import { createTask, getTasks } from "@/lib/api/tasks";
+import { createTask, getTasks, getTaskStats } from "@/lib/api/tasks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface user {
     id: number;
@@ -40,20 +40,23 @@ interface user {
 
 export default function CreateTaskDialog() {
 
-    const [openTaskDialog, setOpenTaskDialog] = useState(false)
-    const [loading, setLoading] = useState(false);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [priority, setPriority] = useState("medium");
-    const [assignedTo, setAssignedTo] = useState("");
-    const [dueDate, setDueDate] = useState("");
-    const [users, setUsers] = useState<user[]>([])
-    const [loadingUsers, setLoadingUsers] = useState(true)
+    const queryClient = useQueryClient();
 
-    const { refetch } = useQuery({
-        queryKey: ["tasks"],
-        queryFn: getTasks,
-    });
+    const [title, setTitle] = useState("");
+    const [dueDate, setDueDate] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [users, setUsers] = useState<user[]>([])
+    const [assignedTo, setAssignedTo] = useState("");
+    const [priority, setPriority] = useState("medium");
+    const [description, setDescription] = useState("");
+    const [loadingUsers, setLoadingUsers] = useState(true)
+    const [openTaskDialog, setOpenTaskDialog] = useState(false)
+
+
+    const { isPending, data, refetch } = useQuery({
+        queryFn: getTaskStats,
+        queryKey: ["task-stats"]
+    })
 
     async function fetchUsers() {
         try {
@@ -88,7 +91,28 @@ export default function CreateTaskDialog() {
         // console.log("Task data:", taskData);
 
         try {
-            await createTask(taskData)
+            const taskResponse = await createTask(taskData)
+            // refetch()
+            if (Array.isArray(taskResponse.data)) {
+                const newTask = taskResponse.data[0]
+                // console.log(newTask)
+                queryClient.setQueryData(["tasks"], (oldData: any) => {
+                    if (!oldData) return oldData;
+
+                    return {
+                        ...oldData,
+                        pages: oldData.pages.map((page: any, index: number) => {
+                            if (index !== 0) return page;
+
+                            return {
+                                ...page,
+                                data: [newTask, ...page.data],
+                            };
+                        }),
+                    };
+                });
+            }
+
             refetch()
             toast.add({
                 title: "Task Created"
@@ -96,6 +120,7 @@ export default function CreateTaskDialog() {
 
         } catch (error) {
             const message = error instanceof Error ? error.message : "something went wrong"
+            console.log(message)
             toast.add({
                 type: 'error',
                 title: message
@@ -111,7 +136,7 @@ export default function CreateTaskDialog() {
         setAssignedTo("");
         setDueDate("");
 
-        setOpen(false);
+        setOpenTaskDialog(false);
     };
 
     return (
@@ -251,7 +276,7 @@ export default function CreateTaskDialog() {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => setOpen(false)}
+                            onClick={() => setOpenTaskDialog(false)}
                             disabled={loading}
                         >
                             Cancel

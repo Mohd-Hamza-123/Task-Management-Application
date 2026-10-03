@@ -13,12 +13,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
 
 import Tasks from "@/components/Tasks";
 import { getTasks } from "@/lib/api/tasks";
@@ -26,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import CreateTaskDialog from "@/components/CreateTaskDialog";
 import SidebarUserMenu from "@/components/SidebarUserMenu";
+import Stats from "@/components/Stats";
 
 type TaskStatus = "pending" | "in_progress" | "completed";
 type TaskPriority = "low" | "medium" | "high";
@@ -48,23 +44,6 @@ export default function DashboardPage() {
 
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [openTaskDialog, setOpenTaskDialog] = useState(false)
-
-  const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ["tasks"],
-    queryFn: getTasks,
-  });
-
-  const tasks: Task[] = data?.data || []
-
-  const stats = {
-    total: tasks.length,
-    pending: tasks.filter((task) => task.status === "pending").length,
-    inProgress: tasks.filter((task) => task.status === "in_progress")
-      .length,
-    completed: tasks.filter((task) => task.status === "completed")
-      .length,
-  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -121,11 +100,6 @@ export default function DashboardPage() {
             <SidebarItem
               icon={<ListTodo className="h-4 w-4" />}
               label="My Tasks"
-            />
-
-            <SidebarItem
-              icon={<Users className="h-4 w-4" />}
-              label="Team"
             />
 
             <div className="my-6">
@@ -190,35 +164,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              title="Total Tasks"
-              value={stats.total}
-              description="All tasks"
-              icon={<ListTodo className="h-5 w-5" />}
-            />
-
-            <StatCard
-              title="Pending"
-              value={stats.pending}
-              description="Waiting to start"
-              icon={<Clock3 className="h-5 w-5" />}
-            />
-
-            <StatCard
-              title="In Progress"
-              value={stats.inProgress}
-              description="Currently working"
-              icon={<Users className="h-5 w-5" />}
-            />
-
-            <StatCard
-              title="Completed"
-              value={stats.completed}
-              description="Successfully finished"
-              icon={<CheckCircle2 className="h-5 w-5" />}
-            />
-          </div>
+          <Stats />
 
           {/* Tasks */}
           <Tasks />
@@ -254,42 +200,3 @@ function SidebarItem({
   );
 }
 
-/* -------------------------------- */
-/* Stat card                        */
-/* -------------------------------- */
-
-function StatCard({
-  title,
-  value,
-  description,
-  icon,
-}: {
-  title: string;
-  value: number;
-  description: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-center justify-between p-5">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">
-            {title}
-          </p>
-
-          <p className="mt-2 text-3xl font-bold tracking-tight">
-            {value}
-          </p>
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            {description}
-          </p>
-        </div>
-
-        <div className="rounded-xl bg-muted p-3">
-          {icon}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}

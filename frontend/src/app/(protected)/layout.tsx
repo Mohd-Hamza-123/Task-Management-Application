@@ -10,7 +10,7 @@ export default async function layout({ children }: { children: React.ReactNode }
     data: { user },
   } = await supabase.auth.getUser()
 
-  console.log("layout user : ", user)
+  // console.log("layout user : ", user)
 
   if (!user) redirect('/login')
 

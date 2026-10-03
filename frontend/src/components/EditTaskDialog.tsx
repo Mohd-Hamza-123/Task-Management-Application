@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "./ui/toast";
 import { getUsers } from "@/lib/api/users";
-import { useQuery } from "@tanstack/react-query";
-import { updateTask, getTasks } from "@/lib/api/tasks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { updateTask, getTasks, getTaskStats } from "@/lib/api/tasks";
 
 interface User {
     id: string;
@@ -44,9 +44,16 @@ export interface Task {
 
 
 export default function EditTaskDialog({
-    task,
-    refetch
-}: { task: Task, refetch?: any }) {
+    task
+}: { task: Task }) {
+
+
+    const { isPending, data, refetch } = useQuery({
+        queryFn: getTaskStats,
+        queryKey: ["task-stats"]
+    })
+
+    const queryClient = useQueryClient()
 
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false);
@@ -112,8 +119,32 @@ export default function EditTaskDialog({
         }
 
         try {
-            await updateTask(task.id, updates);
-            refetch();
+            const updatedTask = await updateTask(task.id, updates);
+            
+            if (updatedTask.data) {
+
+                const task = updatedTask.data
+                console.log(task)
+
+                queryClient.setQueryData(["tasks"], (oldData: any) => {
+                    if (!oldData) return oldData;
+
+                    return {
+                        ...oldData,
+                        pages: oldData.pages.map((page: any) => ({
+                            ...page,
+                            data: page.data.map((currentTask: any) =>
+                                currentTask.id === task.id
+                                    ? { ...currentTask, ...task }
+                                    : currentTask
+                            ),
+                        })),
+                    };
+                });
+            }
+
+
+            refetch()
             toast.add({
                 title: "Task updated",
             });
@@ -132,7 +163,7 @@ export default function EditTaskDialog({
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+            <DialogTrigger>
                 <Button variant="ghost" size="icon">
                     <Pencil size={18} />
                 </Button>
