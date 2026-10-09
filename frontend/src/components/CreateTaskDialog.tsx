@@ -30,6 +30,7 @@ import { toast } from "./ui/toast";
 import { getUsers } from "@/lib/api/users";
 import { createTask, getTasks, getTaskStats } from "@/lib/api/tasks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { taskSchema } from "@/schema/task.schema";
 
 interface user {
     id: number;
@@ -46,8 +47,8 @@ export default function CreateTaskDialog() {
     const [dueDate, setDueDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<user[]>([])
-    const [assignedTo, setAssignedTo] = useState("");
-    const [priority, setPriority] = useState("medium");
+    const [assignedTo, setAssignedTo] = useState<null | string>("");
+    const [priority, setPriority] = useState<null | string>("medium");
     const [description, setDescription] = useState("");
     const [loadingUsers, setLoadingUsers] = useState(true)
     const [openTaskDialog, setOpenTaskDialog] = useState(false)
@@ -78,20 +79,45 @@ export default function CreateTaskDialog() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+
+
         setLoading(true);
 
-        const taskData = {
+        const data = {
             title,
             ...(description && { description }),
-            priority: priority as "high" | "medium" | "low",
-            assigned_to: assignedTo || null,
-            due_date: dueDate || null,
+            priority,
+            assigned_to: assignedTo,
+            due_date: dueDate,
         };
 
-        // console.log("Task data:", taskData);
+        const validate = taskSchema.safeParse(data)
+
+
+
+        if (!validate.success) {
+
+            const issues = validate.error.issues[0]
+            const path = issues.path[0]
+            const message = issues.message
+            console.log(message)
+            console.log(path)
+            toast.add({
+                type: "error",
+                title: `${String(path)} : ${message}`
+            });
+            setLoading(false);
+            return;
+        }
+
+
+        const validData = validate.data
+
+        console.log("Task data:", validData);
+
 
         try {
-            const taskResponse = await createTask(taskData)
+            const taskResponse = await createTask(validData)
             // refetch()
             if (Array.isArray(taskResponse.data)) {
                 const newTask = taskResponse.data[0]
@@ -120,7 +146,7 @@ export default function CreateTaskDialog() {
 
         } catch (error) {
             const message = error instanceof Error ? error.message : "something went wrong"
-            console.log(message)
+            console.error(message)
             toast.add({
                 type: 'error',
                 title: message

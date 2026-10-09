@@ -1,8 +1,15 @@
 "use client";
 
+import { toast } from "./ui/toast";
+import { getUsers } from "@/lib/api/users";
 import { useEffect, useState } from "react";
-import { CalendarIcon, Loader2, Pencil } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { CalendarIcon, Loader2, Pencil } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { updateTask, getTasks, getTaskStats } from "@/lib/api/tasks";
 import {
     Dialog,
     DialogContent,
@@ -12,9 +19,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -22,10 +26,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { toast } from "./ui/toast";
-import { getUsers } from "@/lib/api/users";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { updateTask, getTasks, getTaskStats } from "@/lib/api/tasks";
+import { updateTaskSchema } from "@/schema/task.schema";
+
 
 interface User {
     id: string;
@@ -61,8 +63,8 @@ export default function EditTaskDialog({
     const [title, setTitle] = useState(task.title ?? "");
     const [loadingUsers, setLoadingUsers] = useState(true);
     const [dueDate, setDueDate] = useState(task.due_date ?? "");
-    const [priority, setPriority] = useState(task.priority ?? "medium");
-    const [assignedTo, setAssignedTo] = useState(task.assigned_to ?? "");
+    const [priority, setPriority] = useState<null | string>(task.priority ?? "medium");
+    const [assignedTo, setAssignedTo] = useState<null | string>(task.assigned_to ?? "");
     const [description, setDescription] = useState(task.description ?? "");
 
     // Reset the form whenever a different task is opened, or the dialog reopens
@@ -112,6 +114,17 @@ export default function EditTaskDialog({
             updates.assigned_to = assignedTo || null;
         if (dueDate !== (task.due_date ?? "")) updates.due_date = dueDate || null;
 
+        const result = updateTaskSchema.safeParse(updates)
+
+        if (!result.success) {
+            toast.add({
+                type: "error",
+                title: result.error.issues[0].message,
+            });
+            setLoading(false);
+            return;
+        }
+
         if (Object.keys(updates).length === 0) {
             setLoading(false);
             setOpen(false);
@@ -120,13 +133,13 @@ export default function EditTaskDialog({
 
         try {
             const updatedTask = await updateTask(task.id, updates);
-            
+
             if (updatedTask.data) {
 
                 let task = updatedTask.data
                 console.log(task)
 
-                if(!Array.isArray(task) && task.length < 0) return
+                if (!Array.isArray(task) && task.length < 0) return
 
                 task = task[0]
 

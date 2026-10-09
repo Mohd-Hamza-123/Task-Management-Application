@@ -1,15 +1,8 @@
+import { TaskInput } from "@/schema/task.schema";
 import { apiClient } from "./client"
 
-interface task {
-    title?: string;
-    description?: string;
-    assigned_to?: string | null;
-    priority?: "high" | "medium" | "low";
-    due_date?: string | null;
-    status?: "in_progress" | "completed"
-}
 
-export async function createTask(body: task) {
+export async function createTask(body: TaskInput) {
     return apiClient("/api/tasks", {
         method: "POST",
         body: JSON.stringify(body)
@@ -51,7 +44,7 @@ export async function deleteTask(id: string) {
     })
 }
 
-export async function updateTask(id: string, body: task) {
+export async function updateTask(id: string, body: TaskInput) {
     return apiClient(`/api/tasks/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body)
