@@ -50,20 +50,20 @@ export default function EditTaskDialog({
 
     const { isPending, data, refetch } = useQuery({
         queryFn: getTaskStats,
-        queryKey: ["task-stats"]
+        queryKey: ["created-task-stats"]
     })
 
     const queryClient = useQueryClient()
 
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false);
+    const [users, setUsers] = useState<User[]>([]);
     const [title, setTitle] = useState(task.title ?? "");
-    const [description, setDescription] = useState(task.description ?? "");
+    const [loadingUsers, setLoadingUsers] = useState(true);
+    const [dueDate, setDueDate] = useState(task.due_date ?? "");
     const [priority, setPriority] = useState(task.priority ?? "medium");
     const [assignedTo, setAssignedTo] = useState(task.assigned_to ?? "");
-    const [dueDate, setDueDate] = useState(task.due_date ?? "");
-    const [users, setUsers] = useState<User[]>([]);
-    const [loadingUsers, setLoadingUsers] = useState(true);
+    const [description, setDescription] = useState(task.description ?? "");
 
     // Reset the form whenever a different task is opened, or the dialog reopens
     useEffect(() => {
@@ -123,10 +123,14 @@ export default function EditTaskDialog({
             
             if (updatedTask.data) {
 
-                const task = updatedTask.data
+                let task = updatedTask.data
                 console.log(task)
 
-                queryClient.setQueryData(["tasks"], (oldData: any) => {
+                if(!Array.isArray(task) && task.length < 0) return
+
+                task = task[0]
+
+                queryClient.setQueryData(["created-tasks"], (oldData: any) => {
                     if (!oldData) return oldData;
 
                     return {

@@ -13,7 +13,6 @@ import {
     ListTodo,
     Search,
     CalendarDays,
-    MoreHorizontal,
     Trash,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,7 @@ import Image from 'next/image';
 import EditTaskDialog from './EditTaskDialog';
 import Link from 'next/link';
 import { Button } from './ui/button';
+import { usePathname } from 'next/navigation';
 
 type TaskStatus = "pending" | "in_progress" | "completed";
 type TaskPriority = "low" | "medium" | "high";
@@ -80,7 +80,7 @@ const statusConfig = {
     },
 };
 
-export default function Tasks() {
+export default function CreatedTasks() {
 
 
     const [activeTab, setActiveTab] = useState("all");
@@ -94,7 +94,7 @@ export default function Tasks() {
         hasNextPage,
         isFetchingNextPage,
     } = useInfiniteQuery({
-        queryKey: ["tasks"],
+        queryKey: ["created-tasks"],
 
         queryFn: ({ pageParam }) => getTasks(pageParam),
 
@@ -254,7 +254,7 @@ function TaskRow({ task }: { task: Task }) {
 
     const { isPending, data, refetch } = useQuery({
         queryFn: getTaskStats,
-        queryKey: ["task-stats"]
+        queryKey: ["created-task-stats"]
     })
 
     const status = statusConfig[task.status];
@@ -264,7 +264,7 @@ function TaskRow({ task }: { task: Task }) {
         try {
 
             const res = await removeTask(id)
-            queryClient.setQueryData(["tasks"], (oldData: any) => {
+            queryClient.setQueryData(["created-tasks"], (oldData: any) => {
                 if (!oldData) return oldData;
 
                 return {
@@ -297,6 +297,8 @@ function TaskRow({ task }: { task: Task }) {
         }
     );
 
+    const pathname = usePathname();
+
     return (
         <div className="group flex flex-col gap-4 px-4 py-5 transition hover:bg-muted/40 md:px-6 lg:flex-row lg:items-center">
             {/* Task */}
@@ -306,8 +308,12 @@ function TaskRow({ task }: { task: Task }) {
                         className={`mt-2 h-2 w-2 shrink-0 rounded-full ${status.dot}`}
                     />
 
-                    <div className="min-w-0">
-                        <Link href={`/tasks/${task.id}`} className="truncate font-medium">
+                    <div className="min-w-0 flex-1">
+                        <Link
+                            href={`/tasks/${task.id}?from=${encodeURIComponent(pathname)}`}
+                            title={task.title}
+                            className="block truncate font-medium hover:underline"
+                        >
                             {task.title}
                         </Link>
 
@@ -319,11 +325,8 @@ function TaskRow({ task }: { task: Task }) {
             </div>
 
             {/* Status */}
-            <div className="flex items-center gap-2 lg:w-32">
-                <Badge
-                    variant="outline"
-                    className={status.className}
-                >
+            <div className="flex shrink-0 items-center gap-2 lg:w-32">
+                <Badge variant="outline" className={status.className}>
                     {status.label}
                 </Badge>
             </div>

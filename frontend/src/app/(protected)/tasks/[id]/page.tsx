@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+
 import {
     ArrowLeft,
     CalendarDays,
@@ -41,6 +42,7 @@ interface GetTaskResponse {
 export default function TaskDetailsPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const { data, isLoading, isError, refetch } = useQuery<GetTaskResponse>({
         queryKey: ["tasks", id],
@@ -48,6 +50,15 @@ export default function TaskDetailsPage() {
         enabled: !!id,
         retry: false,
     });
+
+    const handleBack = () => {
+        const from = searchParams.get("from");
+
+        // Only allow internal paths (blocks "https://evil.com" or "//evil.com")
+        const isSafe = from && from.startsWith("/") && !from.startsWith("//");
+
+        router.push(isSafe ? from : "/dashboard");
+    };
 
 
     const task = Array.isArray(data?.data) ? data?.data[0] : undefined
@@ -77,13 +88,13 @@ export default function TaskDetailsPage() {
         return (
             <main className="min-h-screen bg-[#fcfcfc] px-8 py-10">
                 <div className="mx-auto max-w-5xl">
-                    <Link
-                        href="/dashboard"
+                    <span
+                        onClick={handleBack}
                         className="inline-flex items-center gap-2 text-sm text-gray-600 transition hover:text-black"
                     >
                         <ArrowLeft size={16} />
                         Back to Overview
-                    </Link>
+                    </span>
 
                     <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-12 text-center">
                         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
@@ -131,7 +142,7 @@ export default function TaskDetailsPage() {
 
 
                     <div className="">
-                        <EditTaskDialog task={task} refetch={refetch} />
+                        <EditTaskDialog task={task} />
                     </div>
                 </div>
 

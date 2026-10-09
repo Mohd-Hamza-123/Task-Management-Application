@@ -55,7 +55,7 @@ export default function CreateTaskDialog() {
 
     const { isPending, data, refetch } = useQuery({
         queryFn: getTaskStats,
-        queryKey: ["task-stats"]
+        queryKey: ["created-task-stats"]
     })
 
     async function fetchUsers() {
@@ -96,7 +96,7 @@ export default function CreateTaskDialog() {
             if (Array.isArray(taskResponse.data)) {
                 const newTask = taskResponse.data[0]
                 // console.log(newTask)
-                queryClient.setQueryData(["tasks"], (oldData: any) => {
+                queryClient.setQueryData(["created-tasks"], (oldData: any) => {
                     if (!oldData) return oldData;
 
                     return {

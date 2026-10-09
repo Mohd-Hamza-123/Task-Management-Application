@@ -1,8 +1,8 @@
 import React from "react";
-import { getTaskStats } from "@/lib/api/tasks";
+import { getAssignedTasksStats } from "@/lib/api/tasks";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent,} from "@/components/ui/card";
+import { Card, CardContent, } from "@/components/ui/card";
 
 import {
     Users,
@@ -12,15 +12,15 @@ import {
 } from "lucide-react";
 
 
-export default function Stats() {
+export default function AssignedTaskStats() {
 
 
-    const { isPending, data,refetch } = useQuery({
-        queryFn: getTaskStats,
-        queryKey: ["task-stats"]
+    const { isPending, data, refetch } = useQuery({
+        queryFn: getAssignedTasksStats,
+        queryKey: ["assigned-task-stats"]
     })
 
-    const stats = data 
+    const stats = data
 
     if (isPending) {
         return (
