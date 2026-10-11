@@ -31,10 +31,6 @@ app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
 app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
 
-# print("MAIL SERVER:", os.getenv("MAIL_SERVER"))
-# print("USERNAME:", os.getenv("MAIL_USERNAME"))
-# print("PASSWORD SET:", bool(os.getenv("MAIL_PASSWORD")))
-
 mail.init_app(app)
 
 
