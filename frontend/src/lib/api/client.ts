@@ -16,30 +16,36 @@ export async function apiClient(
   options?: RequestInit
 ) {
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
 
-  // console.log(session)
 
-const response = await fetch(`${API_URL}${endpoint}`, {
-  ...options,
-  headers: {
-    "Content-Type": "application/json",
-    ...(session?.access_token && {
-      Authorization: `Bearer ${session.access_token}`,
-    }),
-    ...options?.headers,
-  },
-});
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => null);
+    // console.log(session)
 
-    throw new Error(
-      error?.message || "Something went wrong"
-    );
-  }
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(session?.access_token && {
+          Authorization: `Bearer ${session.access_token}`,
+        }),
+        ...options?.headers,
+      },
+    });
 
-  return response.json();
+    // console.log(response)
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+
+      throw new Error(
+        error?.message || "Something went wrong"
+      );
+    }
+
+    return response.json();
+
+
 }

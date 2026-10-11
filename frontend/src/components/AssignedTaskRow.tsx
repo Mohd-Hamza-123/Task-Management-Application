@@ -63,7 +63,7 @@ type Task = {
 
 
 export default function AssignedTaskRow({ task }: { task: Task }) {
-    console.log(task)
+
     const status = statusConfig[task.status];
     const priority = priorityConfig[task.priority];
 
@@ -81,30 +81,22 @@ export default function AssignedTaskRow({ task }: { task: Task }) {
     return (
         <div className="group flex flex-col gap-4 px-4 py-5 transition hover:bg-muted/40 md:px-6 lg:flex-row lg:items-center">
             {/* Task */}
-            <div className="min-w-0 flex-1">
-                <div className="flex items-start gap-3">
-                    <div
-                        className={`mt-2 h-2 w-2 shrink-0 rounded-full ${status.dot}`}
-                    />
+            <div className="min-w-0">
+                <Link
+                    href={`/tasks/${task.id}?from=${encodeURIComponent(pathname)}`}
+                    className="block truncate font-medium"
+                >
+                    {task.title}
+                </Link>
 
-                    <div className="min-w-0">
-                        <Link href={`/tasks/${task.id}?from=${encodeURIComponent(pathname)}`} className="truncate font-medium">
-                            {task.title}
-                        </Link>
-
-                        <p className="mt-1 truncate text-sm text-muted-foreground">
-                            {task.description}
-                        </p>
-                    </div>
-                </div>
+                <p className="mt-1 truncate text-sm text-muted-foreground">
+                    {task.description}
+                </p>
             </div>
 
             {/* Status */}
-            <div className="flex items-center gap-2 lg:w-32">
-                <Badge
-                    variant="outline"
-                    className={status.className}
-                >
+            <div className="flex shrink-0 items-center gap-2 lg:w-32">
+                <Badge variant="outline" className={status.className}>
                     {status.label}
                 </Badge>
             </div>
@@ -173,17 +165,17 @@ function TaskAction({ task }: { task: Task }) {
             const response = await updateTask(id, {
                 status: "in_progress"
             })
-            console.log(response)
+         
             if (response.data) {
 
                 let task = response.data
-                console.log(task)
+    
 
                 if (!Array.isArray(task) && task.length < 0) return
 
                 task = task[0]
 
-                queryClient.setQueryData(["tasks"], (oldData: any) => {
+                queryClient.setQueryData(["assigned-tasks"], (oldData: any) => {
                     if (!oldData) return oldData;
 
                     return {
@@ -212,18 +204,17 @@ function TaskAction({ task }: { task: Task }) {
             const response = await updateTask(id, {
                 status: "completed"
             })
-            console.log(response)
+     
 
             if (response.data) {
 
                 let task = response.data
-                console.log(task)
-
+                
                 if (!Array.isArray(task) && task.length < 0) return
 
                 task = task[0]
 
-                queryClient.setQueryData(["tasks"], (oldData: any) => {
+                queryClient.setQueryData(["assigned-tasks"], (oldData: any) => {
                     if (!oldData) return oldData;
 
                     return {

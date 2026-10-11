@@ -78,15 +78,15 @@ export default function SidebarUserMenu() {
                     </DropdownMenuTrigger>
 
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        {/* <DropdownMenuItem>
                             Profile
                         </DropdownMenuItem>
 
                         <DropdownMenuItem>
                             Settings
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
 
-                        <DropdownMenuSeparator />
+                        {/* <DropdownMenuSeparator /> */}
 
                         <DropdownMenuItem onClick={logout} className="cursor-pointer">
                             <LogOut className="mr-2 h-4 w-4" />

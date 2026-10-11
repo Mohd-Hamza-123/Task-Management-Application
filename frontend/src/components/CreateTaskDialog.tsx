@@ -6,7 +6,6 @@ import {
     Loader2,
     Plus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -26,16 +25,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+
 import { toast } from "./ui/toast";
 import { getUsers } from "@/lib/api/users";
-import { createTask, getTasks, getTaskStats } from "@/lib/api/tasks";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { taskSchema } from "@/schema/task.schema";
+import { createTask, getTaskStats } from "@/lib/api/tasks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-interface user {
-    id: number;
+interface User {
+    id: string;
     full_name: string;
-    email: string
+    email: string;
 }
 
 
@@ -46,13 +47,12 @@ export default function CreateTaskDialog() {
     const [title, setTitle] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [loading, setLoading] = useState(false);
-    const [users, setUsers] = useState<user[]>([])
-    const [assignedTo, setAssignedTo] = useState<null | string>("");
-    const [priority, setPriority] = useState<null | string>("medium");
+    const [users, setUsers] = useState<User[]>([])
     const [description, setDescription] = useState("");
     const [loadingUsers, setLoadingUsers] = useState(true)
     const [openTaskDialog, setOpenTaskDialog] = useState(false)
-
+    const [assignedTo, setAssignedTo] = useState<null | string>("");
+    const [priority, setPriority] = useState<null | string>("medium");
 
     const { isPending, data, refetch } = useQuery({
         queryFn: getTaskStats,
@@ -165,6 +165,8 @@ export default function CreateTaskDialog() {
         setOpenTaskDialog(false);
     };
 
+    const selectedUser = users.find((u) => u.id === assignedTo);
+   
     return (
         <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
             <DialogTrigger className={`flex gap-1 items-center bg-foreground text-background rounded-lg px-2 py-1`}>
@@ -249,20 +251,16 @@ export default function CreateTaskDialog() {
                             <div className="space-y-2">
                                 <Label>Assign to</Label>
 
-                                <Select
-                                    value={assignedTo}
-                                    onValueChange={setAssignedTo}
-                                >
+                                <Select value={assignedTo} onValueChange={setAssignedTo}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select user" />
+                                        <SelectValue placeholder="Select user">
+                                            {selectedUser ? selectedUser.full_name : undefined}
+                                        </SelectValue>
                                     </SelectTrigger>
 
                                     <SelectContent>
                                         {users?.map((user) => (
-                                            <SelectItem
-                                                key={user.id}
-                                                value={user.id}
-                                            >
+                                            <SelectItem key={user.id} value={user.id}>
                                                 <div className="flex flex-col">
                                                     <span>{user.full_name}</span>
                                                     <span className="text-xs text-muted-foreground">

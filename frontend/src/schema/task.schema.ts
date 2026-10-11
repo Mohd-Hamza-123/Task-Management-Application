@@ -34,6 +34,7 @@ export const updateTaskSchema = taskSchema
     .omit({ status: true }) // omit status
     .extend({
         // allow null so fields can be cleared
+        status: taskSchema.shape.status.nullable(),
         description: taskSchema.shape.description.nullable(),
         assigned_to: taskSchema.shape.assigned_to.nullable(),
         due_date: z.coerce

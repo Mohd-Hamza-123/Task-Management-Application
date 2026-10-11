@@ -10,6 +10,8 @@ import {
     Search,
     CalendarDays,
     Trash,
+    AlertCircle,
+    RefreshCw,
 } from "lucide-react";
 import { Input } from './ui/input';
 import { Spinner } from './ui/spinner';
@@ -19,6 +21,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useIntersectionObserver from '@/hooks/useIntersectionObserver';
 import AssignedTaskRow from './AssignedTaskRow';
+import { Button } from './ui/button';
 
 type TaskStatus = "pending" | "in_progress" | "completed";
 type TaskPriority = "low" | "medium" | "high";
@@ -48,6 +51,8 @@ export default function AssignedTasks() {
         data,
         isPending,
         isError,
+        isFetching,
+        refetch,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
@@ -66,6 +71,9 @@ export default function AssignedTasks() {
             return lastPage.nextPage;
         },
     });
+
+  
+    const isInitialError = isError && !data;
 
     const tasks: Task[] =
         data?.pages.flatMap((page) => page.data) ?? [];
@@ -132,7 +140,7 @@ export default function AssignedTasks() {
 
             <CardContent className="p-0">
 
-                {!isPending && <div className="overflow-x-auto px-4 pt-4 md:px-6">
+                {!isPending && !isInitialError && <div className="overflow-x-auto px-4 pt-4 md:px-6">
                     <Tabs
                         value={activeTab}
                         onValueChange={setActiveTab}
@@ -169,7 +177,6 @@ export default function AssignedTasks() {
                     </Tabs>
                 </div>}
 
-
                 <div className="mt-4">
                     {isPending ? (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -183,6 +190,31 @@ export default function AssignedTasks() {
                             <p className="mt-1 text-sm text-muted-foreground">
                                 {!isPending && filteredTasks.length === 0 ? `Try another filter` : <Spinner />}
                             </p>
+                        </div>
+                    ) : isInitialError ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <div className="mb-3 rounded-xl bg-destructive/10 p-3 text-destructive">
+                                <AlertCircle className="h-6 w-6" />
+                            </div>
+
+                            <h3 className="font-medium">Couldn&apos;t load tasks</h3>
+
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Something went wrong while fetching your tasks.
+                            </p>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-4"
+                                onClick={() => refetch()}
+                                disabled={isFetching}
+                            >
+                                <RefreshCw
+                                    className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+                                />
+                                {isFetching ? "Retrying..." : "Retry"}
+                            </Button>
                         </div>
                     ) : (
                         <div className="divide-y">

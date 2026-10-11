@@ -1,4 +1,4 @@
-import { TaskInput } from "@/schema/task.schema";
+import { TaskInput, UpdateTaskInput } from "@/schema/task.schema";
 import { apiClient } from "./client"
 
 
@@ -44,7 +44,7 @@ export async function deleteTask(id: string) {
     })
 }
 
-export async function updateTask(id: string, body: TaskInput) {
+export async function updateTask(id: string, body: UpdateTaskInput) {
     return apiClient(`/api/tasks/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body)

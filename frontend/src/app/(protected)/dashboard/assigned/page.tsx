@@ -1,49 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     X,
     Bell,
     Menu,
-    Users,
-    Clock3,
-    Settings,
     ListTodo,
-    CheckCircle2,
     LayoutDashboard,
 } from "lucide-react";
-import Link from "next/link";
-import Tasks from "@/components/CreatedTasks";
-import Stats from "@/components/CreatedTaskStats";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import SidebarUserMenu from "@/components/SidebarUserMenu";
-import CreateTaskDialog from "@/components/CreateTaskDialog";
 import SidebarItem from "@/components/SidebarItem";
+
+import { Separator } from "@/components/ui/separator";
 import AssignedTasks from "@/components/AssignedTasks";
+import SidebarUserMenu from "@/components/SidebarUserMenu";
 import AssignedTaskStats from "@/components/AssignedTaskStats";
-
-type TaskStatus = "pending" | "in_progress" | "completed";
-type TaskPriority = "low" | "medium" | "high";
-
-interface Task {
-    id: string;
-    title: string;
-    description: string;
-    status: TaskStatus;
-    priority: TaskPriority;
-    dueDate: string;
-    assignedTo: {
-        name: string;
-        email: string;
-        initials: string;
-    };
-}
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentUser } from "@/lib/api/users";
 
 export default function DashboardPage() {
 
 
+    const { data, isPending, isError } = useQuery({
+        queryKey: ["user"],
+        queryFn: getCurrentUser,
+    })
+    const user = data?.full_name ?? ""
+    console.log(user)
+
+
+
+
     const [sidebarOpen, setSidebarOpen] = useState(false)
+
 
     return (
         <div className="min-h-screen bg-muted/30">
@@ -126,11 +115,11 @@ export default function DashboardPage() {
                         <Menu className="h-5 w-5" />
                     </Button>
 
-                    <div className="hidden lg:block">
+                    {!isPending && !isError && <div className="hidden lg:block">
                         <p className="text-sm text-muted-foreground">
-                            Welcome back, Hamza
+                            Welcome back, {user}
                         </p>
-                    </div>
+                    </div>}
 
                     <div className="ml-auto flex items-center gap-2">
                         <Button variant="ghost" size="icon">

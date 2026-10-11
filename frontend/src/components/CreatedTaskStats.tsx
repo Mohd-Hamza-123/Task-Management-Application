@@ -10,15 +10,16 @@ import {
     ListTodo,
     CheckCircle2,
 } from "lucide-react";
+import StatsError from "./StatsError";
 
 
 export default function Stats() {
 
 
-    const { isPending, data, refetch } = useQuery({
+    const { isPending, isError, isFetching, data, refetch } = useQuery({
         queryFn: getTaskStats,
-        queryKey: ["created-task-stats"]
-    })
+        queryKey: ["created-task-stats"],
+    });
 
     const stats = data
 
@@ -32,32 +33,38 @@ export default function Stats() {
         );
     }
 
+    if (isError) {
+        return (
+            <StatsError onRetry={() => refetch()} isRetrying={isFetching} />
+        );
+    }
+
     return (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
                 title="Total Tasks"
-                value={stats.total}
+                value={stats?.total}
                 description="All tasks"
                 icon={<ListTodo className="h-5 w-5" />}
             />
 
             <StatCard
                 title="Pending"
-                value={stats.pending}
+                value={stats?.pending}
                 description="Waiting to start"
                 icon={<Clock3 className="h-5 w-5" />}
             />
 
             <StatCard
                 title="In Progress"
-                value={stats.inProgress}
+                value={stats?.inProgress}
                 description="Currently working"
                 icon={<Users className="h-5 w-5" />}
             />
 
             <StatCard
                 title="Completed"
-                value={stats.completed}
+                value={stats?.completed}
                 description="Successfully finished"
                 icon={<CheckCircle2 className="h-5 w-5" />}
             />

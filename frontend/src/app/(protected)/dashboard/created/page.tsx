@@ -1,47 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   X,
-  Bell,
   Menu,
-  Users,
-  Clock3,
-  Settings,
   ListTodo,
-  CheckCircle2,
   LayoutDashboard,
 } from "lucide-react";
 
-import Stats from "@/components/CreatedTaskStats";
 import { Button } from "@/components/ui/button";
+import Stats from "@/components/CreatedTaskStats";
+import SidebarItem from "@/components/SidebarItem";
+import CreatedTasks from "@/components/CreatedTasks";
 import { Separator } from "@/components/ui/separator";
 import SidebarUserMenu from "@/components/SidebarUserMenu";
 import CreateTaskDialog from "@/components/CreateTaskDialog";
-import SidebarItem from "@/components/SidebarItem";
-import CreatedTasks from "@/components/CreatedTasks";
-
-type TaskStatus = "pending" | "in_progress" | "completed";
-type TaskPriority = "low" | "medium" | "high";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  dueDate: string;
-  assignedTo: {
-    name: string;
-    email: string;
-    initials: string;
-  };
-}
-
+import { useQuery } from "@tanstack/react-query";
+import { getCurrentUser } from "@/lib/api/users";
 export default function DashboardPage() {
 
+  const { data, isPending, isError } = useQuery({
+    queryKey: ["user"],
+    queryFn: getCurrentUser,
+  })
+
+  const user = data?.full_name ?? ""
+  console.log(user)
 
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -113,6 +100,7 @@ export default function DashboardPage() {
 
       {/* Main */}
       <div className="lg:pl-64">
+
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur md:px-6">
           <Button
@@ -124,19 +112,13 @@ export default function DashboardPage() {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <div className="hidden lg:block">
+          {!isPending && !isError && <div className="hidden lg:block">
             <p className="text-sm text-muted-foreground">
-              Welcome back, Hamza
+              Welcome back, {user}
             </p>
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
+          </div>}
 
 
-          </div>
         </header>
 
         {/* Page content */}

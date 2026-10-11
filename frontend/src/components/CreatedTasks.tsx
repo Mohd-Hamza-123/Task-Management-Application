@@ -14,6 +14,8 @@ import {
     Search,
     CalendarDays,
     Trash,
+    AlertCircle,
+    RefreshCw,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -90,6 +92,8 @@ export default function CreatedTasks() {
         data,
         isPending,
         isError,
+        isFetching,
+        refetch,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
@@ -109,6 +113,7 @@ export default function CreatedTasks() {
         },
     });
 
+    const isInitialError = isError && !data;
     const tasks: Task[] =
         data?.pages.flatMap((page) => page.data) ?? [];
 
@@ -227,7 +232,30 @@ export default function CreatedTasks() {
                                 {!isPending && filteredTasks.length === 0 ? `Try another filter` : <Spinner />}
                             </p>
                         </div>
-                    ) : (
+                    ) : isInitialError ? (<div className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="mb-3 rounded-xl bg-destructive/10 p-3 text-destructive">
+                            <AlertCircle className="h-6 w-6" />
+                        </div>
+
+                        <h3 className="font-medium">Couldn&apos;t load tasks</h3>
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Something went wrong while fetching your tasks.
+                        </p>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4"
+                            onClick={() => refetch()}
+                            disabled={isFetching}
+                        >
+                            <RefreshCw
+                                className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+                            />
+                            {isFetching ? "Retrying..." : "Retry"}
+                        </Button>
+                    </div>) : (
                         <div className="divide-y">
                             {filteredTasks.map((task) => (
                                 <TaskRow key={task.id} task={task} />

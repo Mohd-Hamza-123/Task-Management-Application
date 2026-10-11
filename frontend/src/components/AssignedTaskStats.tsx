@@ -10,12 +10,13 @@ import {
     ListTodo,
     CheckCircle2,
 } from "lucide-react";
+import StatsError from "./StatsError";
 
 
 export default function AssignedTaskStats() {
 
 
-    const { isPending, data, refetch } = useQuery({
+    const { isPending, data, refetch, isFetching, isError } = useQuery({
         queryFn: getAssignedTasksStats,
         queryKey: ["assigned-task-stats"]
     })
@@ -31,6 +32,13 @@ export default function AssignedTaskStats() {
             </div>
         );
     }
+
+    if (isError) {
+        return (
+            <StatsError onRetry={() => refetch()} isRetrying={isFetching} />
+        );
+    }
+
 
     return (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
