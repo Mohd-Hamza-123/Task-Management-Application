@@ -16,7 +16,8 @@ CORS(
     supports_credentials=True,
     origins=[
         "http://localhost:3000",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
+        "https://veltoza.vercel.app"
     ],
 )
 
@@ -32,7 +33,6 @@ app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
 
 mail.init_app(app)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
