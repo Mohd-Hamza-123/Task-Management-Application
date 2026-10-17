@@ -113,15 +113,11 @@ export default function CreateTaskDialog() {
 
         const validData = validate.data
 
-        console.log("Task data:", validData);
-
 
         try {
             const taskResponse = await createTask(validData)
-            // refetch()
-            if (Array.isArray(taskResponse.data)) {
-                const newTask = taskResponse.data[0]
-                // console.log(newTask)
+            if (taskResponse.data) {
+                const newTask = taskResponse.data
                 queryClient.setQueryData(["created-tasks"], (oldData: any) => {
                     if (!oldData) return oldData;
 
@@ -166,7 +162,7 @@ export default function CreateTaskDialog() {
     };
 
     const selectedUser = users.find((u) => u.id === assignedTo);
-   
+
     return (
         <Dialog open={openTaskDialog} onOpenChange={setOpenTaskDialog}>
             <DialogTrigger className={`flex gap-1 items-center bg-foreground text-background rounded-lg px-2 py-1`}>

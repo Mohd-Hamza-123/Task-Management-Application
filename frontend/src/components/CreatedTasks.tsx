@@ -117,8 +117,6 @@ export default function CreatedTasks() {
     const tasks: Task[] =
         data?.pages.flatMap((page) => page.data) ?? [];
 
-    console.log(tasks)
-
     const filteredTasks = useMemo(() => {
         return tasks?.filter((task) => {
             const matchesSearch =
@@ -309,9 +307,12 @@ function TaskRow({ task }: { task: Task }) {
             })
         } catch (error) {
             console.error(error)
+
+            const message = error instanceof Error ? error.message : "something went wrong"
+
             toast.add({
                 type: 'error',
-                title: "Task not deleted"
+                title: message
             })
         }
     }
